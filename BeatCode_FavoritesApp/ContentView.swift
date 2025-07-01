@@ -12,14 +12,40 @@ struct ContentView: View {
     
     var body: some View {
         NavigationStack {
-            List(viewModel.people) { person in
-                NavigationLink {
-                    PersonDetailView(person: person)
-                } label: {
-                    Text(person.name)
+            List {
+                Section("Favorites") {
+                    ForEach(viewModel.people.filter { $0.isFavorite }) { person in
+                        PersonRow(person: person, viewModel: viewModel)
+                    }
+                }
+                
+                Section("All People") {
+                    ForEach(viewModel.people.filter { !$0.isFavorite }) { person in
+                        PersonRow(person: person, viewModel: viewModel)
+                    }
                 }
             }
             .navigationTitle("People")
+        }
+    }
+}
+
+struct PersonRow: View {
+    let person: Person
+    @ObservedObject var viewModel: PeopleViewModel
+    
+    var body: some View {
+        NavigationLink {
+            PersonDetailView(viewModel: viewModel, person: person)
+        } label: {
+            HStack {
+                Text(person.name)
+                Spacer()
+                if person.isFavorite {
+                    Image(systemName: "heart.fill")
+                        .foregroundColor(.red)
+                }
+            }
         }
     }
 }
