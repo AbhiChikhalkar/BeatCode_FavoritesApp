@@ -1,3 +1,11 @@
+//
+//  PersonDetailView.swift
+//  BeatCode_FavoritesApp
+//
+//  Created by Abhishek Chikhalkar on 01/07/25.
+//
+
+
 import SwiftUI
 
 struct PersonDetailView: View {

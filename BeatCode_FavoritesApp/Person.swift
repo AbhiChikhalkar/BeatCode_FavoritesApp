@@ -1,3 +1,11 @@
+//
+//  Person.swift
+//  BeatCode_FavoritesApp
+//
+//  Created by Abhishek Chikhalkar on 01/07/25.
+//
+
+
 import Foundation
 
 struct Person: Identifiable, Hashable {
