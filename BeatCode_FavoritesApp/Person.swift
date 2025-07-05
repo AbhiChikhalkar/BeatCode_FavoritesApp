@@ -5,12 +5,14 @@
 //  Created by Abhishek Chikhalkar on 01/07/25.
 //
 
-import Foundation
+import SwiftData
+import SwiftUI
 
-struct Person: Identifiable, Hashable {
-    let id = UUID()
+@Model
+final class Person {
+    var id: UUID
     var name: String
-    var isFavorite: Bool = false  // Added favorite state
+    var isFavorite: Bool
     var details: String
     var dob: Date
     var sex: String
@@ -18,29 +20,30 @@ struct Person: Identifiable, Hashable {
     var experience: Int
     var skills: [String]
     
-    var age: Int {
-        Calendar.current.dateComponents([.year], from: dob, to: Date()).year ?? 0
+    init(name: String, isFavorite: Bool, details: String, dob: Date, sex: String,
+         contact: String, experience: Int, skills: [String]) {
+        self.id = UUID()
+        self.name = name
+        self.isFavorite = isFavorite
+        self.details = details
+        self.dob = dob
+        self.sex = sex
+        self.contact = contact
+        self.experience = experience
+        self.skills = skills
     }
     
-    var formattedDOB: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        return formatter.string(from: dob)
-    }
-    
-    var initials: String {  // Added for profile circle
+    var initials: String {
         name.components(separatedBy: " ")
             .compactMap { $0.first?.uppercased() }
             .joined()
     }
     
-    static let sample = Person(
-        name: "John Doe",
-        details: "iOS Developer",
-        dob: Calendar.current.date(byAdding: .year, value: -30, to: Date())!,
-        sex: "Male",
-        contact: "john@example.com",
-        experience: 5,
-        skills: ["Swift", "UIKit", "SwiftUI", "Core Data"]
-    )
+    var formattedDOB: String {
+        dob.formatted(date: .abbreviated, time: .omitted)
+    }
+    
+    var age: Int {
+        Calendar.current.dateComponents([.year], from: dob, to: Date()).year ?? 0
+    }
 }

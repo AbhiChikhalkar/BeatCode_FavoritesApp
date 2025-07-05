@@ -1,15 +1,16 @@
 //
 //  AddEditPersonView.swift
-//  BeatCode
+//  BeatCode_FavoritesApp
 //
 //  Created by Abhishek Chikhalkar on 01/07/25.
 //
 
 
 import SwiftUI
+import SwiftData
 
 struct AddEditPersonView: View {
-    @ObservedObject var viewModel: PeopleViewModel
+    @EnvironmentObject var viewModel: PeopleViewModel
     @Environment(\.dismiss) var dismiss
     
     @State private var name: String
@@ -24,8 +25,7 @@ struct AddEditPersonView: View {
     
     private var editingPerson: Person?
     
-    init(viewModel: PeopleViewModel) {
-        self.viewModel = viewModel
+    init() {
         _name = State(initialValue: "")
         _details = State(initialValue: "")
         _dob = State(initialValue: Date())
@@ -36,8 +36,7 @@ struct AddEditPersonView: View {
         self.editingPerson = nil
     }
     
-    init(viewModel: PeopleViewModel, person: Person) {
-        self.viewModel = viewModel
+    init(person: Person) {
         _name = State(initialValue: person.name)
         _details = State(initialValue: person.details)
         _dob = State(initialValue: person.dob)
@@ -63,7 +62,11 @@ struct AddEditPersonView: View {
                 }
                 
                 Section("Professional Info") {
-                    TextField("Contact", text: $contact)
+                    TextField("Contact (Email or Phone)", text: $contact)
+                        .keyboardType(.emailAddress)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                    
                     Stepper("Experience: \(experience) years", value: $experience, in: 0...50)
                     TextField("Skills (comma separated)", text: $skills)
                 }
@@ -91,15 +94,23 @@ struct AddEditPersonView: View {
     }
     
     private func save() {
-        // Validate inputs
+        // Validate name
         if name.isEmpty {
             errorMessage = "Name cannot be empty"
             showingAlert = true
             return
         }
         
+        // Validate details
         if details.isEmpty {
             errorMessage = "Details cannot be empty"
+            showingAlert = true
+            return
+        }
+        
+        // Validate contact (email or phone)
+        if !isValidEmail(contact) && !isValidPhoneNumber(contact) {
+            errorMessage = "Please enter a valid email or phone number"
             showingAlert = true
             return
         }
@@ -110,7 +121,7 @@ struct AddEditPersonView: View {
         
         if let editingPerson = editingPerson {
             viewModel.updatePerson(
-                id: editingPerson.id,
+                person: editingPerson,
                 name: name,
                 details: details,
                 dob: dob,
@@ -132,15 +143,28 @@ struct AddEditPersonView: View {
         }
         dismiss()
     }
+    
+    private func isValidEmail(_ email: String) -> Bool {
+        let emailRegEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
+        let emailPred = NSPredicate(format:"SELF MATCHES %@", emailRegEx)
+        return emailPred.evaluate(with: email)
+    }
+    
+    private func isValidPhoneNumber(_ phone: String) -> Bool {
+        let phoneRegex = "^[0-9+]{0,1}+[0-9]{5,16}$"
+        let phoneTest = NSPredicate(format: "SELF MATCHES %@", phoneRegex)
+        return phoneTest.evaluate(with: phone)
+    }
 }
-
 struct AddEditPersonView_Previews: PreviewProvider {
     static var previews: some View {
-        let viewModel = PeopleViewModel()
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try! ModelContainer(for: Person.self, configurations: config)
+        let context = container.mainContext
+        let viewModel = PeopleViewModel(modelContext: context)
         
-        Group {
-            AddEditPersonView(viewModel: viewModel)
-            AddEditPersonView(viewModel: viewModel, person: viewModel.people[0])
-        }
+        return AddEditPersonView()
+            .environmentObject(viewModel)
+            .modelContainer(container)
     }
 }

@@ -1,21 +1,20 @@
 //
-//  BeatCode_FavoritesAppApp.swift
+//
 //  BeatCode_FavoritesApp
 //
 //  Created by Abhishek Chikhalkar on 01/07/25.
 //
 
+
 import SwiftUI
 import SwiftData
 
 @main
-struct BeatCode_FavoritesAppApp: App {
+struct BeatCodeApp: App {
     var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
+        let schema = Schema([Person.self])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
+        
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
@@ -26,7 +25,10 @@ struct BeatCode_FavoritesAppApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(
+                    PeopleViewModel(modelContext: sharedModelContainer.mainContext)
+                )
+                .modelContainer(sharedModelContainer)
         }
-        .modelContainer(sharedModelContainer)
     }
 }
