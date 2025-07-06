@@ -11,6 +11,7 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject var viewModel: PeopleViewModel
     @State private var showingAddSheet = false
+    @State private var editMode: EditMode = .inactive
     @State private var isEditing = false
     @State private var searchText = ""
     
@@ -35,26 +36,26 @@ struct ContentView: View {
                         PersonRow(person: person, isEditing: isEditing)
                     }
                     .onDelete { indexSet in
-                        for index in indexSet {
-                            let person = filteredPeople.filter { $0.isFavorite }[index]
-                            viewModel.deletePerson(person)
-                        }
+                        deletePeople(at: indexSet, fromFavorites: true)
                     }
                 }
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel("Favorites")
                 
                 Section("All People") {
                     ForEach(filteredPeople.filter { !$0.isFavorite }) { person in
                         PersonRow(person: person, isEditing: isEditing)
                     }
                     .onDelete { indexSet in
-                        for index in indexSet {
-                            let person = filteredPeople.filter { !$0.isFavorite }[index]
-                            viewModel.deletePerson(person)
-                        }
+                        deletePeople(at: indexSet, fromFavorites: false)
                     }
                 }
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel("All People")
             }
+            .accessibilityLabel("People list")
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
+            .accessibilityHint("Search for people by name, details, contact or skills")
             .navigationTitle("People")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -62,26 +63,44 @@ struct ContentView: View {
                     Button(action: { showingAddSheet = true }) {
                         Label("Add", systemImage: "plus")
                     }
+                    .accessibilityLabel("Add new person")
                     
                     Spacer()
                     
                     Button(action: { isEditing.toggle() }) {
                         Label(isEditing ? "Done" : "Edit", systemImage: isEditing ? "checkmark" : "pencil")
                     }
+                    .accessibilityLabel(isEditing ? "Done editing" : "Edit list")
+                    .accessibilityHint(isEditing ? "Tap to finish editing" : "Tap to edit the list")
                     
                     Spacer()
                     
                     Menu {
                         Button("Sort by Name") { viewModel.sortByName() }
+                            .accessibilityLabel("Sort by name")
                         Button("Favorites First") { viewModel.sortByFavorite() }
+                            .accessibilityLabel("Sort with favorites first")
                     } label: {
                         Label("Sort", systemImage: "arrow.up.arrow.down")
                     }
+                    .accessibilityLabel("Sort options")
+                    .accessibilityHint("Tap to choose sorting options")
                 }
             }
             .sheet(isPresented: $showingAddSheet) {
                 AddEditPersonView()
             }
+        }
+    }
+    
+    private func deletePeople(at offsets: IndexSet, fromFavorites: Bool) {
+        let people = fromFavorites ?
+            filteredPeople.filter { $0.isFavorite } :
+            filteredPeople.filter { !$0.isFavorite }
+        
+        for index in offsets {
+            let person = people[index]
+            viewModel.deletePerson(person)
         }
     }
 }

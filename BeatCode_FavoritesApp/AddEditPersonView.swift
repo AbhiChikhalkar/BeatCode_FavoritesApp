@@ -48,50 +48,79 @@ struct AddEditPersonView: View {
     }
     
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("Basic Info") {
-                    TextField("Name", text: $name)
-                    TextField("Details", text: $details)
-                    DatePicker("Date of Birth", selection: $dob, displayedComponents: .date)
-                    Picker("Sex", selection: $sex) {
-                        Text("Male").tag("Male")
-                        Text("Female").tag("Female")
-                        Text("Other").tag("Other")
+            NavigationStack {
+                Form {
+                    Section("Basic Info") {
+                        TextField("Name", text: $name)
+                            .accessibilityLabel("Name")
+                            .accessibilityHint("Enter the person's name")
+                        
+                        TextField("Details", text: $details)
+                            .accessibilityLabel("Details")
+                            .accessibilityHint("Enter details about the person")
+                        
+                        DatePicker("Date of Birth", selection: $dob, displayedComponents: .date)
+                            .accessibilityLabel("Date of birth")
+                            .accessibilityHint("Select the person's date of birth")
+                        
+                        Picker("Sex", selection: $sex) {
+                            Text("Male").tag("Male")
+                            Text("Female").tag("Female")
+                            Text("Other").tag("Other")
+                        }
+                        .accessibilityLabel("Gender")
+                        .accessibilityHint("Select the person's gender")
                     }
-                }
-                
-                Section("Professional Info") {
-                    TextField("Contact (Email or Phone)", text: $contact)
-                        .keyboardType(.emailAddress)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
+                    .accessibilityElement(children: .contain)
+                    .accessibilityLabel("Basic information")
                     
-                    Stepper("Experience: \(experience) years", value: $experience, in: 0...50)
-                    TextField("Skills (comma separated)", text: $skills)
-                }
-                
-                Section {
-                    Button("Save") {
-                        save()
+                    Section("Professional Info") {
+                        TextField("Contact (Email or Phone)", text: $contact)
+                            .keyboardType(.emailAddress)
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                            .accessibilityLabel("Contact information")
+                            .accessibilityHint("Enter email or phone number")
+                        
+                        Stepper("Experience: \(experience) years", value: $experience, in: 0...50)
+                            .accessibilityLabel("Experience")
+                            .accessibilityValue("\(experience) years")
+                            .accessibilityHint("Adjust the years of experience")
+                        
+                        TextField("Skills (comma separated)", text: $skills)
+                            .accessibilityLabel("Skills")
+                            .accessibilityHint("Enter skills separated by commas")
                     }
-                    .disabled(name.isEmpty)
+                    .accessibilityElement(children: .contain)
+                    .accessibilityLabel("Professional information")
+                    
+                    Section {
+                        Button("Save") {
+                            save()
+                        }
+                        .disabled(name.isEmpty)
+                        .accessibilityLabel("Save")
+                        .accessibilityHint("Save the person's information")
+                        .accessibilityAddTraits(.isButton)
+                        .accessibilityAddTraits(name.isEmpty ? .isButton : [])
+                    }
                 }
-            }
-            .alert("Error", isPresented: $showingAlert) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(errorMessage)
-            }
-            .navigationTitle(editingPerson == nil ? "Add Person" : "Edit Person")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                .alert("Error", isPresented: $showingAlert) {
+                    Button("OK", role: .cancel) { }
+                        .accessibilityLabel("OK")
+                } message: {
+                    Text(errorMessage)
+                }
+                .navigationTitle(editingPerson == nil ? "Add Person" : "Edit Person")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") { dismiss() }
+                            .accessibilityLabel("Cancel")
+                    }
                 }
             }
         }
-    }
     
     private func save() {
         // Validate name

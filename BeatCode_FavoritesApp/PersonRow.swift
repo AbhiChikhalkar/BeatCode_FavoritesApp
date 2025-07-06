@@ -15,66 +15,46 @@ struct PersonRow: View {
     @State private var showingEditSheet = false
     
     var body: some View {
-        HStack {
-            // Red info button (only shown in edit mode)
+        let rowContent = HStack(spacing: 16) {
             if isEditing {
-                Menu {
-                    Button {
-                        showingEditSheet = true
-                    } label: {
-                        Label("Edit", systemImage: "pencil")
-                    }
-                    
-                    Button(role: .destructive) {
-                        viewModel.deletePerson(person)
-                    } label: {
-                        Label("Delete", systemImage: "trash")
-                    }
-                } label: {
-                    Image(systemName: "info.circle.fill")
-                        .foregroundColor(.red)
-                        .font(.system(size: 20))
-                }
-                .padding(.trailing, 8)
+                editMenu
             }
             
+            profileInitials
+            
+            personInfo
+            
+            Spacer()
+            
+            favoriteButton
+        }
+        .padding(16)
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+        
+        ZStack {
             NavigationLink {
                 PersonDetailView(person: person)
             } label: {
-                HStack {
-                    if isEditing {
-                        Image(systemName: "line.3.horizontal")
-                            .foregroundColor(.gray)
-                            .accessibilityHidden(true)
-                    }
-                    
-                    VStack(alignment: .leading) {
-                        Text(person.name)
-                            .fontWeight(person.isFavorite ? .bold : .regular)
-                        Text(person.details)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    Spacer()
-                    
-                    if !isEditing {
-                        Button {
-                            viewModel.toggleFavorite(for: person)
-                        } label: {
-                            Image(systemName: person.isFavorite ? "heart.fill" : "heart")
-                                .foregroundColor(person.isFavorite ? .pink : .gray)
-                                .contentTransition(.symbolEffect(.replace))
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(person.isFavorite ? "Remove from favorites" : "Add to favorites")
-                    }
-                }
+                EmptyView()
             }
-            .disabled(isEditing)
+            .opacity(0)
+            .accessibilityHidden(true)
+            
+            rowContent
         }
-        .padding(.vertical, 8)
-        // Swipe actions (only active when NOT in edit mode)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(person.name), \(person.details)")
+        .accessibilityHint("Double tap to view details")
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction(named: person.isFavorite ? "Remove from favorites" : "Add to favorites") {
+            viewModel.toggleFavorite(for: person)
+        }
+        .buttonStyle(.plain)
+        .listRowSeparator(.hidden)
+        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+        .listRowBackground(person.isFavorite ? Color.pink.opacity(0.1) : Color.clear)
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
             if !isEditing {
                 Button {
@@ -82,6 +62,7 @@ struct PersonRow: View {
                 } label: {
                     Label("Edit", systemImage: "pencil")
                 }
+                .accessibilityLabel("Edit \(person.name)")
                 .tint(.blue)
             }
         }
@@ -92,14 +73,76 @@ struct PersonRow: View {
                 } label: {
                     Label("Delete", systemImage: "trash")
                 }
+                .accessibilityLabel("Delete \(person.name)")
             }
         }
         .sheet(isPresented: $showingEditSheet) {
             AddEditPersonView(person: person)
         }
-        .listRowBackground(person.isFavorite ? Color.pink.opacity(0.1) : Color.clear)
+    }
+    
+    private var editMenu: some View {
+        Menu {
+            Button {
+                showingEditSheet = true
+            } label: {
+                Label("Edit", systemImage: "pencil")
+            }
+            .accessibilityLabel("Edit \(person.name)")
+            
+            Button(role: .destructive) {
+                viewModel.deletePerson(person)
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+            .accessibilityLabel("Delete \(person.name)")
+        } label: {
+            Image(systemName: "info.circle.fill")
+                .foregroundColor(.red)
+                .font(.system(size: 20))
+        }
+        .accessibilityLabel("Actions for \(person.name)")
+        .padding(.trailing, 8)
+    }
+    
+    private var profileInitials: some View {
+        Circle()
+            .fill(Color.blue.opacity(0.2))
+            .frame(width: 48, height: 48)
+            .overlay(
+                Text(person.initials)
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.blue)
+            )
+            .accessibilityHidden(true)
+    }
+    
+    private var personInfo: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(person.name)
+                .font(.headline)
+                .fontWeight(.semibold)
+                .accessibilityAddTraits(.isHeader)
+            
+            Text(person.details)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+    }
+    
+    private var favoriteButton: some View {
+        Button {
+            viewModel.toggleFavorite(for: person)
+        } label: {
+            Image(systemName: person.isFavorite ? "heart.fill" : "heart")
+                .foregroundColor(person.isFavorite ? .red : .gray)
+                .font(.system(size: 20))
+        }
+        .accessibilityHidden(true) // Handled by the accessibilityAction
+        .buttonStyle(.plain)
     }
 }
+
 struct PersonRow_Previews: PreviewProvider {
     static var previews: some View {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
@@ -118,8 +161,28 @@ struct PersonRow_Previews: PreviewProvider {
             skills: ["Swift", "SwiftUI"]
         )
         
-        return PersonRow(person: samplePerson, isEditing: false)
+        return Group {
+            PersonRow(person: samplePerson, isEditing: false)
+                .environmentObject(viewModel)
+                .previewDisplayName("Normal")
+            
+            PersonRow(person: samplePerson, isEditing: true)
+                .environmentObject(viewModel)
+                .previewDisplayName("Editing")
+            
+            PersonRow(person: Person(
+                name: "Laura Bracale",
+                isFavorite: true,
+                details: "Designer",
+                dob: Date(),
+                sex: "Female",
+                contact: "laura@example.com",
+                experience: 4,
+                skills: ["Figma"]
+            ), isEditing: false)
             .environmentObject(viewModel)
-            .modelContainer(container)
+            .previewDisplayName("Favorite")
+        }
+        .modelContainer(container)
     }
 }

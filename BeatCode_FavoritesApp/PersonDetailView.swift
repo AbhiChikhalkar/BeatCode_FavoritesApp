@@ -10,131 +10,185 @@ import SwiftUI
 
 struct PersonDetailView: View {
     @Bindable var person: Person
-    @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @State private var isAnimating = false
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // Profile Image
-                ZStack {
-                    Circle()
-                        .fill(Color.blue.opacity(0.2))
-                        .frame(width: 120, height: 120)
-                    
-                    Text(person.initials)
-                        .font(.system(size: 48, weight: .bold))
-                        .foregroundColor(.blue)
-                }
-                .padding(.top, 30)
-                
-                // Info Section
-                VStack(alignment: .leading, spacing: 15) {
-                    Text(person.name)
-                        .font(.title)
-                        .fontWeight(.bold)
-                    
-                    Text(person.details)
-                        .font(.title3)
-                        .foregroundColor(.secondary)
-                    
-                    Divider()
-                    
-                    DetailRow(icon: "calendar", label: "Age", value: "\(person.age) years")
-                    DetailRow(icon: "birthday.cake", label: "DOB", value: person.formattedDOB)
-                    DetailRow(icon: "person.fill", label: "Sex", value: person.sex)
-                    DetailRow(icon: "mail", label: "Contact", value: person.contact)
-                    
-                    // Experience
-                    HStack {
-                        Image(systemName: "briefcase")
-                            .foregroundColor(.blue)
-                            .frame(width: 30)
-                        Text("Experience")
-                        Spacer()
-                        Text("\(person.experience) years")
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    // Skills
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Image(systemName: "laptopcomputer")
-                                .foregroundColor(.blue)
-                                .frame(width: 30)
-                            Text("Skills")
-                            Spacer()
-                        }
-                        
-                        FlexibleView(data: person.skills, spacing: 8, alignment: .leading) { skill in
-                            Text(skill)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(Color.blue.opacity(0.1))
-                                .cornerRadius(12)
-                        }
-                    }
-                }
-                .padding(.horizontal)
-                
-                Spacer()
-                
-                // Favorite Button
-                Button {
-                    person.isFavorite.toggle()
-                } label: {
-                    HStack {
-                        Image(systemName: person.isFavorite ? "heart.fill" : "heart")
-                            .font(.title2)
-                        Text(person.isFavorite ? "Remove from Favorites" : "Add to Favorites")
-                            .font(.headline)
-                    }
-                    .foregroundColor(person.isFavorite ? .white : .pink)
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(person.isFavorite ? Color.pink : Color.pink.opacity(0.2))
-                    .cornerRadius(10)
-                    .padding(.horizontal)
-                }
-                .accessibilityLabel(person.isFavorite ? "Remove from favorites" : "Add to favorites")
-                .padding(.bottom, 30)
-            }
-        }
-        .navigationTitle("Profile")
-        .navigationBarTitleDisplayMode(.inline)
-        .background(Color(.systemGroupedBackground))
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink {
-                    AddEditPersonView(person: person)
-                } label: {
-                    Text("Edit")
-                }
-            }
-        }
-    }
-}
+           ScrollView {
+               VStack(spacing: 0) {
+                   ZStack(alignment: .topTrailing) {
+                       LinearGradient(
+                           gradient: Gradient(colors: [Color.blue.opacity(0.2), Color.blue.opacity(0.05)]),
+                           startPoint: .topLeading,
+                           endPoint: .bottomTrailing
+                       )
+                       .frame(height: 220)
+                       .overlay(
+                           Text(person.initials)
+                               .font(.system(size: 80, weight: .bold))
+                               .foregroundColor(.blue.opacity(0.15))
+                       )
+                       .accessibilityHidden(true)
+                       
+                       VStack(alignment: .leading, spacing: 8) {
+                           Spacer()
+                           
+                           Text(person.name)
+                               .font(.system(size: 28, weight: .bold))
+                               .lineLimit(2)
+                               .minimumScaleFactor(0.8)
+                               .accessibilityAddTraits(.isHeader)
+                           
+                           Text(person.details)
+                               .font(.title3)
+                               .foregroundColor(.secondary)
+                       }
+                       .frame(maxWidth: .infinity, alignment: .leading)
+                       .padding(.horizontal, 20)
+                       .padding(.bottom, 60)
+                   }
+                   .accessibilityElement(children: .combine)
+                   .accessibilityLabel("\(person.name), \(person.details)")
+                   
+                   VStack(alignment: .leading, spacing: 20) {
+                       VStack(alignment: .leading, spacing: 12) {
+                           Text("Personal Information")
+                               .font(.headline)
+                               .foregroundColor(.blue)
+                               .accessibilityAddTraits(.isHeader)
+                           
+                           Divider()
+                               .accessibilityHidden(true)
+                           
+                           DetailRow(icon: "calendar", label: "Age", value: "\(person.age) years")
+                           DetailRow(icon: "birthday.cake", label: "Date of Birth", value: person.formattedDOB)
+                           DetailRow(icon: "person.fill", label: "Gender", value: person.sex)
+                           DetailRow(icon: "envelope", label: "Contact", value: person.contact)
+                       }
+                       .accessibilityElement(children: .contain)
+                       .accessibilityLabel("Personal information")
+                       
+                       VStack(alignment: .leading, spacing: 12) {
+                           Text("Professional Information")
+                               .font(.headline)
+                               .foregroundColor(.blue)
+                               .accessibilityAddTraits(.isHeader)
+                           
+                           Divider()
+                               .accessibilityHidden(true)
+                           
+                           DetailRow(icon: "briefcase", label: "Experience", value: "\(person.experience) years")
+                           
+                           VStack(alignment: .leading, spacing: 8) {
+                               Text("Skills")
+                                   .font(.subheadline)
+                                   .foregroundColor(.primary)
+                               
+                               FlexibleView(
+                                   data: person.skills,
+                                   spacing: 8,
+                                   alignment: .leading
+                               ) { skill in
+                                   Text(skill)
+                                       .padding(.horizontal, 12)
+                                       .padding(.vertical, 6)
+                                       .font(.caption)
+                                       .background(Capsule().fill(Color.blue.opacity(0.1)))
+                                       .foregroundColor(.blue)
+                               }
+                               .accessibilityElement(children: .combine)
+                               .accessibilityLabel("Skills: \(person.skills.joined(separator: ", "))")
+                           }
+                       }
+                       .accessibilityElement(children: .contain)
+                       .accessibilityLabel("Professional information")
+                       
+                       Button {
+                           person.isFavorite.toggle()
+                       } label: {
+                           HStack {
+                               Image(systemName: person.isFavorite ? "heart.fill" : "heart")
+                                   .font(.title2)
+                               Text(person.isFavorite ? "Remove from Favorites" : "Add to Favorites")
+                                   .font(.headline)
+                           }
+                           .frame(maxWidth: .infinity)
+                           .padding(.vertical, 12)
+                           .background(
+                               Capsule()
+                                   .fill(person.isFavorite ? Color.red.opacity(0.2) : Color.gray.opacity(0.1))
+                           )
+                       }
+                       .accessibilityLabel(person.isFavorite ? "Remove from favorites" : "Add to favorites")
+                       .accessibilityHint("Double tap to toggle favorite status")
+                       .foregroundColor(person.isFavorite ? .red : .primary)
+                       .padding(.top, 8)
+                   }
+                   .padding(20)
+                   .background(Color(.systemBackground))
+                   .cornerRadius(16)
+                   .shadow(color: .black.opacity(0.08), radius: 10, x: 0, y: 5)
+                   .padding(.horizontal, 16)
+                   .offset(y: -30)
+                   .zIndex(1)
+               }
+               .padding(.bottom, 20)
+           }
+           .background(Color(.systemGroupedBackground))
+           .ignoresSafeArea(edges: .top)
+           .navigationBarTitleDisplayMode(.inline)
+           .toolbar {
+               ToolbarItem(placement: .navigationBarTrailing) {
+                   Button {
+                       dismiss()
+                   } label: {
+                       Image(systemName: "xmark.circle.fill")
+                           .font(.title2)
+                           .symbolRenderingMode(.hierarchical)
+                           .foregroundColor(.gray)
+                   }
+                   .accessibilityLabel("Close")
+               }
+           }
+           .onAppear {
+               withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                   isAnimating = true
+               }
+           }
+       }
+   }
 
-// MARK: - Helper Views
-
-struct DetailRow: View {
-    let icon: String
-    let label: String
-    let value: String
-    
-    var body: some View {
-        HStack {
-            Image(systemName: icon)
-                .foregroundColor(.blue)
-                .frame(width: 30)
-            Text(label)
-            Spacer()
-            Text(value)
-                .foregroundColor(.secondary)
-        }
-    }
-}
-
+// MARK: - Detail row
+   struct DetailRow: View {
+       let icon: String
+       let label: String
+       let value: String
+       
+       var body: some View {
+           HStack(alignment: .top, spacing: 12) {
+               Image(systemName: icon)
+                   .frame(width: 24, alignment: .center)
+                   .foregroundColor(.blue)
+                   .accessibilityHidden(true)
+               
+               VStack(alignment: .leading, spacing: 2) {
+                   Text(label)
+                       .font(.subheadline)
+                       .foregroundColor(.secondary)
+                       .accessibilityHidden(true)
+                   
+                   Text(value)
+                       .font(.body)
+                       .foregroundColor(.primary)
+               }
+               .accessibilityElement(children: .combine)
+               .accessibilityLabel("\(label): \(value)")
+               
+               Spacer()
+           }
+           .padding(.vertical, 6)
+       }
+   }
 struct FlexibleView<Data: Collection, Content: View>: View where Data.Element: Hashable {
     let data: Data
     let spacing: CGFloat
